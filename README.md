@@ -1,32 +1,49 @@
-# Hitster DIY
+# Schmitzter
 
 Ein selbstgebautes Hitster-Musik-Ratespiel: physische Karten mit QR-Code,
-die eine kleine Web-App öffnen. Die App spielt einen kurzen Songausschnitt
-ab dem Refrain über YouTube ab, ohne vorher Titel, Interpret oder Songbild
-zu verraten. Erst nach dem Abspielen kann man per Button aufdecken.
+die per In-App-Kamera-Scan erkannt werden. Die App spielt einen kurzen
+Songausschnitt ab dem Refrain über YouTube ab, ohne vorher Titel,
+Interpret oder Songbild zu verraten. Man kann jederzeit während der
+Wiedergabe aufdecken (Titel/Interpret/Jahr), der Ausschnitt läuft dabei
+einfach bis zum Ende weiter.
 
 Reines privates Party-/Geschenkprojekt, kein kommerzielles Produkt.
 
 ## Wie es funktioniert
 
-1. QR-Code auf der Karte scannen → öffnet die Web-App mit `?id=<Song-ID>`.
-2. App zeigt **nur** einen Play-Button.
-3. Antippen → Song wird per [YouTube IFrame Player API](https://developers.google.com/youtube/iframe_api_reference)
-   geladen, springt zum Refrain (`chorusStart`) und spielt ca. 20–25 Sekunden,
-   dann pausiert automatisch.
-4. Danach erscheint "🔍 Aufdecken" → zeigt Titel, Interpret und Jahr.
+1. Startseite zeigt das Schmitzter-Logo und einen "📷 QR-Code scannen"-Button.
+2. Antippen → Kamera öffnet sich in der App (kein Umweg über die
+   System-Kamera-App), QR-Code der physischen Karte in den Rahmen halten.
+3. Karte erkannt → nur ein Play-Button erscheint, keine Songinfos.
+4. Antippen → Song wird per [YouTube IFrame Player API](https://developers.google.com/youtube/iframe_api_reference)
+   geladen, springt zum Refrain (`chorusStart`) und spielt ca. 20–25 Sekunden.
+5. Während der Wiedergabe kann jederzeit auf "🔍 Aufdecken" getippt werden
+   → zeigt Titel, Interpret, Jahr. Der Ausschnitt läuft im Hintergrund
+   einfach bis zum Ende weiter (pausiert automatisch nach ca. 20–25 Sek.).
+6. "➡️ Nächste Karte" → Kamera öffnet sich direkt wieder für die nächste
+   Karte.
 
-Der YouTube-Player wird bewusst klein gehalten und zusätzlich mit einer
-blickdichten Fläche abgedeckt, damit vor dem Abspielen/Aufdecken nichts
-sichtbar wird (manche Musikvideos zeigen Künstlernamen im Bild selbst).
-Es wird kein YouTube-Data-API-Key benötigt, kein Login, kein Download –
-alles läuft rein clientseitig über das offizielle IFrame-Embed.
+Der YouTube-Player wird bewusst klein gehalten, mit einer blickdichten
+Fläche abgedeckt und schon beim Laden der Seite im Hintergrund vorbereitet
+(nötig für zuverlässige Ton-Wiedergabe auf iOS Safari), damit vor dem
+Abspielen/Aufdecken nichts sichtbar wird. Es wird kein YouTube-Data-API-Key
+benötigt, kein Login, kein Download – alles läuft rein clientseitig über
+das offizielle IFrame-Embed. Der QR-Scan läuft ebenfalls komplett
+clientseitig über die Kamera und die Bibliothek [jsQR](https://github.com/cozmo/jsQR)
+(lokal eingebunden, keine Internetverbindung zu Drittanbietern nötig).
+
+**Wichtig:** Kamera-Zugriff (`getUserMedia`) funktioniert im Browser nur
+über eine sichere Verbindung – also HTTPS oder `localhost`. Über eine
+rohe LAN-IP oder sogar über `.local`-Hostnamen lässt sich der QR-Scanner
+**nicht** testen (siehe Abschnitt "Hosten" unten für Details, wie man das
+trotzdem lokal testet).
 
 ## Projektstruktur
 
 ```
 ├── index.html / app.js / styles.css   Die Web-App
 ├── songs.json                         Zentrale Songdatenbank
+├── vendor/jsQR.min.js                 QR-Decoder-Bibliothek (lokal, kein CDN)
 ├── scripts/
 │   ├── generate_qr.py                 Erzeugt QR-Codes aus songs.json
 │   ├── generate_cards_pdf.py          Baut das druckfertige Karten-PDF
@@ -123,6 +140,17 @@ Falls das Handy den `.local`-Namen nicht auflöst (kommt bei manchen
 Routern/Android-Versionen vor), alternativ direkt über GitHub Pages
 testen (siehe unten) – dort tritt das Problem nicht auf, da es sich um
 eine echte Domain handelt.
+
+**Kamera-Scan lokal testen:** Der QR-Scanner selbst braucht zwingend
+HTTPS oder `localhost` (Browser-Sicherheitsrichtlinie für Kamera-Zugriff)
+– weder eine LAN-IP noch ein `.local`-Hostname reichen dafür aus. Zwei
+Wege, den Scanner trotzdem vor dem Kartendruck zu testen:
+
+- Direkt über die live gehostete GitHub-Pages-URL (siehe unten) – dort
+  funktioniert die Kamera ganz normal.
+- Oder lokal die Karten-Logik ohne echten Scan testen: einfach die URL
+  `?id=001` direkt aufrufen (siehe oben) – das überspringt Startseite und
+  Kamera und geht direkt zur Karte.
 
 **Dauerhaft (kostenlos):**
 

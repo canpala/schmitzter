@@ -3,18 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Hitster DIY</title>
+  <title>Schmitzter</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="app">
     <div id="loading" class="state">
-      <p>Lade Karte …</p>
+      <p>Lade …</p>
+    </div>
+
+    <div id="home" class="state hidden">
+      <h1 class="logo"><span class="logo-part1">SCHMITZ</span><span class="logo-part2">TER</span></h1>
+      <button id="scanBtn" class="big-button">📷 QR-Code scannen</button>
+    </div>
+
+    <div id="scanner" class="state hidden">
+      <div class="scan-frame">
+        <video id="scanVideo" playsinline muted></video>
+      </div>
+      <p class="hint" id="scanHint">Karte in den Rahmen halten …</p>
+      <button id="cancelScanBtn" class="secondary-button">Abbrechen</button>
     </div>
 
     <div id="error" class="state hidden">
       <h1>Ups!</h1>
       <p id="errorText">Diese Karte konnte nicht gefunden werden.</p>
+      <button id="errorBackBtn" class="secondary-button">Zurück</button>
     </div>
 
     <div id="game" class="state hidden">
@@ -32,9 +46,12 @@
         <div class="result-title" id="resultTitle"></div>
         <div class="result-artist" id="resultArtist"></div>
       </div>
+
+      <button id="nextBtn" class="big-button hidden">➡️ Nächste Karte</button>
     </div>
   </main>
 
+  <script src="vendor/jsQR.min.js"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="app.js"></script>
 </body>
