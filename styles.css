@@ -125,32 +125,6 @@ body {
   margin: 0;
 }
 
-.player-wrap {
-  position: relative;
-  width: 160px;
-  height: 90px;
-  overflow: hidden;
-  border-radius: 0.5rem;
-}
-
-.player-wrap iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-}
-
-/* Deckt den YouTube-Player optisch komplett ab (kein Vorschaubild, keine
-   Songinfos sichtbar) und verschmilzt mit dem Seitenhintergrund, damit
-   der Player von Anfang an (schon vor dem Play-Klick) unauffaellig im
-   Hintergrund existieren kann. Das Element selbst bleibt vorhanden und
-   ist nicht auf 0px verkleinert. */
-.player-cover {
-  position: absolute;
-  inset: 0;
-  background: var(--bg);
-  pointer-events: none;
-}
-
 .result {
   width: 100%;
   padding: 2rem 1rem;

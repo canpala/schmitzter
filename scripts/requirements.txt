@@ -1,2 +1,4 @@
 qrcode[pil]
 fpdf2
+yt-dlp
+imageio-ffmpeg

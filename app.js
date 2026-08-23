@@ -1,18 +1,16 @@
 // Schmitzter – App-Logik
 //
 // Ablauf: Startseite -> "QR-Code scannen" (Kamera + jsQR) -> Karte gefunden
-// -> Play -> Song ab chorusStart, laeuft PLAY_DURATION_MS. Waehrend der
-// Wiedergabe kann jederzeit aufgedeckt werden (Titel/Interpret/Jahr), der
-// Ausschnitt laeuft dabei einfach bis zum vorgesehenen Ende weiter. Danach
-// "Naechste Karte" -> Kamera oeffnet sich direkt wieder fuer den naechsten
-// Scan.
+// -> Play -> lokaler Audio-Clip (audio/<id>.mp3, ab chorusStart schon
+// zugeschnitten) spielt bis zu seinem Ende. Waehrend der Wiedergabe kann
+// jederzeit aufgedeckt werden (Titel/Interpret/Jahr), der Clip laeuft
+// dabei einfach weiter. Danach "Naechste Karte" -> Kamera oeffnet sich
+// direkt wieder fuer den naechsten Scan.
 //
-// Der YouTube-Player wird einmalig erzeugt und fuer jede neue Karte per
-// cueVideoById() wiederverwendet (statt destroy/recreate), damit der
-// iOS-Autoplay-Trick (Player existiert schon vor dem Klick) auch bei der
-// zweiten, dritten, ... Karte weiter funktioniert.
-
-const PLAY_DURATION_MS = 22000; // 20-25 Sekunden
+// Die Clips werden vorab per scripts/extract_clips.py aus YouTube
+// extrahiert (siehe README) und lokal als MP3 abgelegt – dadurch keine
+// YouTube-Werbung, keine Laender-Sperren, kein iFrame-Krams mehr zur
+// Laufzeit.
 
 const loadingEl = document.getElementById("loading");
 const homeEl = document.getElementById("home");
@@ -28,6 +26,7 @@ const cancelScanBtn = document.getElementById("cancelScanBtn");
 const errorBackBtn = document.getElementById("errorBackBtn");
 
 const playBtn = document.getElementById("playBtn");
+const audioEl = document.getElementById("player");
 const revealBtn = document.getElementById("revealBtn");
 const nextBtn = document.getElementById("nextBtn");
 const resultEl = document.getElementById("result");
@@ -37,12 +36,6 @@ const resultArtistEl = document.getElementById("resultArtist");
 
 let songsCache = null;
 let song = null;
-let player = null;
-let playerReady = false;
-let apiReady = false;
-let pendingPlay = false;
-let pendingSong = null;
-let revealTimer = null;
 
 let videoStream = null;
 let scanRAF = null;
@@ -105,16 +98,16 @@ async function loadSong(id) {
 
   resetRoundState();
   song = found;
+  audioEl.src = `audio/${song.id}.mp3`;
+  audioEl.load();
   showState(gameEl);
-  prepareVideo();
 }
 
 function resetRoundState() {
-  if (revealTimer) {
-    clearTimeout(revealTimer);
-    revealTimer = null;
-  }
-  pendingPlay = false;
+  audioEl.pause();
+  audioEl.removeAttribute("src");
+  audioEl.load();
+
   playBtn.disabled = false;
   playBtn.textContent = "▶ Abspielen";
   revealBtn.classList.add("hidden");
@@ -122,117 +115,27 @@ function resetRoundState() {
   resultEl.classList.add("hidden");
 }
 
-// --- YouTube Player -------------------------------------------------------
-
-window.onYouTubeIframeAPIReady = function () {
-  apiReady = true;
-  if (pendingSong) {
-    const s = pendingSong;
-    pendingSong = null;
-    prepareVideo(s);
-  }
-};
-
-function prepareVideo() {
-  if (!apiReady) {
-    pendingSong = song;
-    return;
-  }
-
-  if (!player) {
-    player = new YT.Player("player", {
-      height: "90",
-      width: "160",
-      videoId: song.youtubeId,
-      playerVars: {
-        start: song.chorusStart,
-        controls: 0,
-        modestbranding: 1,
-        rel: 0,
-        fs: 0,
-        iv_load_policy: 3,
-        disablekb: 1,
-        playsinline: 1,
-        origin: window.location.origin,
-      },
-      events: {
-        onReady: onPlayerReady,
-        onStateChange: onPlayerStateChange,
-        onError: onPlayerError,
-      },
-    });
-  } else {
-    player.cueVideoById({
-      videoId: song.youtubeId,
-      startSeconds: song.chorusStart,
-    });
-  }
-}
-
-function onPlayerReady() {
-  playerReady = true;
-  if (pendingPlay) {
-    pendingPlay = false;
-    startVideoPlayback();
-  }
-}
-
-function startVideoPlayback() {
-  player.seekTo(song.chorusStart, true);
-  player.playVideo();
-}
+// --- Wiedergabe --------------------------------------------------------
 
 function startPlayback() {
   playBtn.disabled = true;
   playBtn.textContent = "Laedt …";
 
-  if (playerReady) {
-    startVideoPlayback();
-  } else {
-    pendingPlay = true;
-  }
+  audioEl.play().catch(() => {
+    showError("Der Audio-Clip konnte nicht abgespielt werden.");
+  });
 }
 
-// Manche (monetarisierten) YouTube-Videos zeigen vor dem eigentlichen
-// Inhalt eine Werbeanzeige. Die IFrame API meldet dafuer ebenfalls
-// PLAYING, aber die Wiedergabeposition liegt dann nahe 0 statt bei
-// chorusStart. Nur wenn die Position zum erwarteten Refrain passt,
-// starten wir Countdown und Aufdecken-Button.
-const AD_POSITION_TOLERANCE_SEC = 5;
-
-function onPlayerStateChange(event) {
-  if (event.data !== YT.PlayerState.PLAYING || revealTimer) return;
-
-  const current = player.getCurrentTime();
-  const isProbablyAd =
-    Math.abs(current - song.chorusStart) > AD_POSITION_TOLERANCE_SEC;
-
-  if (isProbablyAd) {
-    // Warten, bis die Werbung durch ist; danach kommt ein neues
-    // PLAYING-Event fuer den eigentlichen Song.
-    return;
-  }
-
+audioEl.addEventListener("playing", () => {
   playBtn.textContent = "Laeuft …";
   revealBtn.classList.remove("hidden");
-  revealTimer = setTimeout(() => {
-    player.pauseVideo();
-  }, PLAY_DURATION_MS);
-}
+});
 
-const YT_ERROR_MESSAGES = {
-  2: "ungueltige Video-ID",
-  5: "HTML5-Player-Fehler",
-  100: "Video nicht gefunden/entfernt",
-  101: "Embedding vom Rechteinhaber gesperrt",
-  150: "Embedding vom Rechteinhaber gesperrt",
-};
-
-function onPlayerError(event) {
-  const code = event.data;
-  const reason = YT_ERROR_MESSAGES[code] || "unbekannter Grund";
-  showError(`Dieses Video kann nicht abgespielt werden (Code ${code}: ${reason}).`);
-}
+audioEl.addEventListener("error", () => {
+  if (song) {
+    showError("Der Audio-Clip konnte nicht geladen werden.");
+  }
+});
 
 function reveal() {
   resultYearEl.textContent = song.year;
@@ -344,9 +247,6 @@ errorBackBtn.addEventListener("click", () => {
 playBtn.addEventListener("click", startPlayback);
 revealBtn.addEventListener("click", reveal);
 nextBtn.addEventListener("click", () => {
-  if (player) {
-    player.pauseVideo();
-  }
   resetRoundState();
   startScanner();
 });

@@ -34,10 +34,7 @@
     <div id="game" class="state hidden">
       <button id="playBtn" class="big-button">▶ Abspielen</button>
 
-      <div id="playerWrap" class="player-wrap">
-        <div id="player"></div>
-        <div class="player-cover" aria-hidden="true"></div>
-      </div>
+      <audio id="player" preload="none"></audio>
 
       <button id="revealBtn" class="big-button hidden">🔍 Aufdecken</button>
 
@@ -52,7 +49,6 @@
   </main>
 
   <script src="vendor/jsQR.min.js"></script>
-  <script src="https://www.youtube.com/iframe_api"></script>
   <script src="app.js"></script>
 </body>
 </html>
