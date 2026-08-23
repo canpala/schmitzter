@@ -193,14 +193,31 @@ function startPlayback() {
   }
 }
 
+// Manche (monetarisierten) YouTube-Videos zeigen vor dem eigentlichen
+// Inhalt eine Werbeanzeige. Die IFrame API meldet dafuer ebenfalls
+// PLAYING, aber die Wiedergabeposition liegt dann nahe 0 statt bei
+// chorusStart. Nur wenn die Position zum erwarteten Refrain passt,
+// starten wir Countdown und Aufdecken-Button.
+const AD_POSITION_TOLERANCE_SEC = 5;
+
 function onPlayerStateChange(event) {
-  if (event.data === YT.PlayerState.PLAYING && !revealTimer) {
-    playBtn.textContent = "Laeuft …";
-    revealBtn.classList.remove("hidden");
-    revealTimer = setTimeout(() => {
-      player.pauseVideo();
-    }, PLAY_DURATION_MS);
+  if (event.data !== YT.PlayerState.PLAYING || revealTimer) return;
+
+  const current = player.getCurrentTime();
+  const isProbablyAd =
+    Math.abs(current - song.chorusStart) > AD_POSITION_TOLERANCE_SEC;
+
+  if (isProbablyAd) {
+    // Warten, bis die Werbung durch ist; danach kommt ein neues
+    // PLAYING-Event fuer den eigentlichen Song.
+    return;
   }
+
+  playBtn.textContent = "Laeuft …";
+  revealBtn.classList.remove("hidden");
+  revealTimer = setTimeout(() => {
+    player.pauseVideo();
+  }, PLAY_DURATION_MS);
 }
 
 const YT_ERROR_MESSAGES = {
