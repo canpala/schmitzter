@@ -1,5 +1,13 @@
 // Hitster DIY – Player-Logik
 // Ablauf: Play -> Song ab chorusStart fuer PLAY_DURATION_MS -> Auto-Pause -> Aufdecken
+//
+// Der YouTube-Player wird bereits beim Laden der Seite im Hintergrund
+// erzeugt und auf den Refrain vorbereitet (stumm, nicht gestartet). Der
+// Play-Klick loest dann nur noch playVideo() auf einem bereits
+// existierenden iFrame aus. Das ist auf iOS Safari deutlich zuverlaessiger
+// als einen komplett neuen Player erst im Klick-Handler zu erzeugen –
+// dort blockiert Safari die Ton-Wiedergabe in frisch eingefuegten
+// Cross-Origin-iFrames oft trotz Nutzerinteraktion.
 
 const PLAY_DURATION_MS = 22000; // 20-25 Sekunden
 
@@ -8,7 +16,6 @@ const errorEl = document.getElementById("error");
 const errorTextEl = document.getElementById("errorText");
 const gameEl = document.getElementById("game");
 const playBtn = document.getElementById("playBtn");
-const playerWrap = document.getElementById("playerWrap");
 const revealBtn = document.getElementById("revealBtn");
 const resultEl = document.getElementById("result");
 const resultYearEl = document.getElementById("resultYear");
@@ -17,7 +24,9 @@ const resultArtistEl = document.getElementById("resultArtist");
 
 let song = null;
 let player = null;
+let playerReady = false;
 let apiReady = false;
+let pendingPlay = false;
 let revealTimer = null;
 
 function showState(state) {
@@ -59,55 +68,64 @@ async function init() {
   }
 
   showState(gameEl);
+  maybeCreatePlayer();
 }
 
 // Wird von der YouTube IFrame API global aufgerufen, sobald sie bereit ist.
 window.onYouTubeIframeAPIReady = function () {
   apiReady = true;
+  maybeCreatePlayer();
 };
 
-function waitForApi(callback) {
-  if (apiReady && window.YT && window.YT.Player) {
-    callback();
-    return;
+function maybeCreatePlayer() {
+  if (!apiReady || !song || player) return;
+
+  player = new YT.Player("player", {
+    height: "90",
+    width: "160",
+    videoId: song.youtubeId,
+    playerVars: {
+      start: song.chorusStart,
+      controls: 0,
+      modestbranding: 1,
+      rel: 0,
+      fs: 0,
+      iv_load_policy: 3,
+      disablekb: 1,
+      playsinline: 1,
+      origin: window.location.origin,
+    },
+    events: {
+      onReady: onPlayerReady,
+      onStateChange: onPlayerStateChange,
+      onError: onPlayerError,
+    },
+  });
+}
+
+function onPlayerReady() {
+  playerReady = true;
+  if (pendingPlay) {
+    pendingPlay = false;
+    startVideoPlayback();
   }
-  const check = setInterval(() => {
-    if (apiReady && window.YT && window.YT.Player) {
-      clearInterval(check);
-      callback();
-    }
-  }, 100);
+}
+
+function startVideoPlayback() {
+  player.seekTo(song.chorusStart, true);
+  player.playVideo();
 }
 
 function startPlayback() {
   playBtn.disabled = true;
   playBtn.textContent = "Laedt …";
 
-  waitForApi(() => {
-    playerWrap.classList.remove("hidden");
-
-    player = new YT.Player("player", {
-      height: "90",
-      width: "160",
-      videoId: song.youtubeId,
-      playerVars: {
-        autoplay: 1,
-        start: song.chorusStart,
-        controls: 0,
-        modestbranding: 1,
-        rel: 0,
-        fs: 0,
-        iv_load_policy: 3,
-        disablekb: 1,
-        playsinline: 1,
-        origin: window.location.origin,
-      },
-      events: {
-        onStateChange: onPlayerStateChange,
-        onError: onPlayerError,
-      },
-    });
-  });
+  if (playerReady) {
+    startVideoPlayback();
+  } else {
+    pendingPlay = true;
+    maybeCreatePlayer();
+  }
 }
 
 function onPlayerStateChange(event) {
@@ -135,7 +153,6 @@ function onPlayerError(event) {
 }
 
 function showRevealButton() {
-  playerWrap.classList.add("hidden");
   revealBtn.classList.remove("hidden");
 }
 

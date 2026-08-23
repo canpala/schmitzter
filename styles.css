@@ -83,12 +83,14 @@ body {
 }
 
 /* Deckt den YouTube-Player optisch komplett ab (kein Vorschaubild, keine
-   Songinfos sichtbar), waehrend das Element selbst weiterhin vorhanden
-   und nicht auf 0px verkleinert ist. */
+   Songinfos sichtbar) und verschmilzt mit dem Seitenhintergrund, damit
+   der Player von Anfang an (schon vor dem Play-Klick) unauffaellig im
+   Hintergrund existieren kann. Das Element selbst bleibt vorhanden und
+   ist nicht auf 0px verkleinert. */
 .player-cover {
   position: absolute;
   inset: 0;
-  background: var(--card);
+  background: var(--bg);
   pointer-events: none;
 }
 
