@@ -1,0 +1,42 @@
+[
+  {
+    "id": "001",
+    "youtubeId": "dQw4w9WgXcQ",
+    "title": "Never Gonna Give You Up",
+    "artist": "Rick Astley",
+    "year": 1987,
+    "chorusStart": 43
+  },
+  {
+    "id": "002",
+    "youtubeId": "09R8_2nJtjg",
+    "title": "Sugar",
+    "artist": "Maroon 5",
+    "year": 2015,
+    "chorusStart": 55
+  },
+  {
+    "id": "003",
+    "youtubeId": "JGwWNGJdvx8",
+    "title": "Shape of You",
+    "artist": "Ed Sheeran",
+    "year": 2017,
+    "chorusStart": 43
+  },
+  {
+    "id": "004",
+    "youtubeId": "kJQP7kiw5Fk",
+    "title": "Despacito",
+    "artist": "Luis Fonsi ft. Daddy Yankee",
+    "year": 2017,
+    "chorusStart": 45
+  },
+  {
+    "id": "005",
+    "youtubeId": "hT_nvWreIhg",
+    "title": "Counting Stars",
+    "artist": "OneRepublic",
+    "year": 2013,
+    "chorusStart": 51
+  }
+]
