@@ -61,19 +61,45 @@ Ausschnitte urheberrechtlich geschützter Musik als Dateien im
 Geschenkprojekt ist das Risiko sehr gering, aber es ist bewusst so
 entschieden worden statt versehentlich zu passieren.
 
+## Für andere Personen einrichten (z. B. am Handy anderer Mitspieler)
+
+Die App braucht keinen Account und keine Installation aus einem App-Store
+– sie läuft direkt im Browser unter `https://canpala.github.io/schmitzter/`.
+Damit sie sich trotzdem wie eine "echte" App anfühlt (Icon auf dem
+Startbildschirm, kein URL-Eintippen nötig), gibt es:
+
+- Ein Web-App-Manifest (`manifest.json`) + Icons (`icons/`), damit
+  Android-Chrome "Zum Startbildschirm hinzufügen" anbietet und die App
+  dann mit eigenem Icon und ohne Browser-Adressleiste startet.
+- Einen Start-QR-Code (`output/qr-start.png`, wird von
+  `scripts/generate_qr.py` miterzeugt), der nur die Startseite öffnet
+  (ohne Song-ID) – zum einmaligen Öffnen mit der normalen Handykamera.
+- Eine ausdruckbare Anleitung (`output/anleitung.pdf`, per
+  `scripts/generate_instructions_pdf.py`) mit großer Schrift: Start-QR-Code
+  scannen → "Zum Startbildschirm hinzufügen" → fertig, plus eine kurze
+  Spielanleitung. Praktisch, um sie ausgedruckt neben die Spielkarten zu
+  legen.
+
+```bash
+python3 scripts/generate_instructions_pdf.py
+```
+
 ## Projektstruktur
 
 ```
 ├── index.html / app.js / styles.css   Die Web-App
+├── manifest.json                      Web-App-Manifest (Startbildschirm-Icon)
+├── icons/                             App-Icons (192px/512px)
 ├── songs.json                         Zentrale Songdatenbank
 ├── audio/                             Songausschnitte als MP3 (<id>.mp3)
 ├── vendor/jsQR.min.js                 QR-Decoder-Bibliothek (lokal, kein CDN)
 ├── scripts/
-│   ├── generate_qr.py                 Erzeugt QR-Codes aus songs.json
+│   ├── generate_qr.py                 Erzeugt QR-Codes aus songs.json + Start-QR
 │   ├── generate_cards_pdf.py          Baut das druckfertige Karten-PDF
 │   ├── extract_clips.py               Extrahiert Audio-Clips aus YouTube
+│   ├── generate_instructions_pdf.py   Baut die Einrichtungs-Anleitung (PDF)
 │   └── requirements.txt
-└── output/                            Generierte QR-Codes + PDF (nicht eingecheckt)
+└── output/                            Generierte QR-Codes + PDFs (nicht eingecheckt)
 ```
 
 ## Neue Songs hinzufügen

@@ -16,6 +16,7 @@ BASE_URL = "https://canpala.github.io/schmitzter/"
 ROOT = pathlib.Path(__file__).parent.parent
 SONGS_FILE = ROOT / "songs.json"
 OUTPUT_DIR = ROOT / "output" / "qr-codes"
+START_QR_PATH = ROOT / "output" / "qr-start.png"
 
 
 def main():
@@ -30,6 +31,13 @@ def main():
         print(f"{song['id']}: {url} -> {out_path.relative_to(ROOT)}")
 
     print(f"\n{len(songs)} QR-Codes erzeugt in {OUTPUT_DIR.relative_to(ROOT)}/")
+
+    # Zusaetzlicher "Start"-QR-Code (ohne id) -> oeffnet die Startseite.
+    # Praktisch, damit man die App einmalig per normaler Handykamera oeffnen
+    # kann, ohne die URL abzutippen (z. B. um "Zum Startbildschirm
+    # hinzufuegen" zu nutzen).
+    qrcode.make(BASE_URL).save(START_QR_PATH)
+    print(f"Start-QR-Code: {BASE_URL} -> {START_QR_PATH.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":
