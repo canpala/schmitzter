@@ -100,6 +100,7 @@ function startPlayback() {
         iv_load_policy: 3,
         disablekb: 1,
         playsinline: 1,
+        origin: window.location.origin,
       },
       events: {
         onStateChange: onPlayerStateChange,
@@ -119,8 +120,18 @@ function onPlayerStateChange(event) {
   }
 }
 
-function onPlayerError() {
-  showError("Dieses Video kann nicht abgespielt werden.");
+const YT_ERROR_MESSAGES = {
+  2: "ungueltige Video-ID",
+  5: "HTML5-Player-Fehler",
+  100: "Video nicht gefunden/entfernt",
+  101: "Embedding vom Rechteinhaber gesperrt",
+  150: "Embedding vom Rechteinhaber gesperrt",
+};
+
+function onPlayerError(event) {
+  const code = event.data;
+  const reason = YT_ERROR_MESSAGES[code] || "unbekannter Grund";
+  showError(`Dieses Video kann nicht abgespielt werden (Code ${code}: ${reason}).`);
 }
 
 function showRevealButton() {

@@ -102,8 +102,27 @@ nachdem, ob der Drucker an der langen oder kurzen Kante wendet, ggf.
 python3 -m http.server 8765
 ```
 
-Dann im Browser/Handy (im selben Netzwerk) `http://<rechner-ip>:8765/?id=001`
-öffnen.
+Zum Öffnen vom Handy im selben WLAN **nicht die rohe IP-Adresse** des
+Rechners verwenden (`http://192.168.x.x:8765/...`) – YouTube weist
+Embed-Anfragen von einer nackten IP-Adresse als Origin oft mit
+Fehler 150/101 ("Embedding vom Rechteinhaber gesperrt") ab, auch wenn
+das Video eigentlich frei einbettbar ist. Stattdessen den `.local`-
+Hostnamen (Bonjour) des Rechners nutzen:
+
+```bash
+scutil --get LocalHostName   # z. B. "MacBook-Pro-von-Can"
+```
+
+Dann auf dem Handy:
+
+```
+http://<LocalHostName>.local:8765/?id=001
+```
+
+Falls das Handy den `.local`-Namen nicht auflöst (kommt bei manchen
+Routern/Android-Versionen vor), alternativ direkt über GitHub Pages
+testen (siehe unten) – dort tritt das Problem nicht auf, da es sich um
+eine echte Domain handelt.
 
 **Dauerhaft (kostenlos):**
 
