@@ -90,18 +90,34 @@ def main():
         action="store_true",
         help="Auch Songs neu extrahieren, fuer die bereits eine audio/<id>.mp3 existiert.",
     )
+    parser.add_argument(
+        "--ids",
+        nargs="+",
+        help="Nur diese Song-IDs (neu) extrahieren, z.B. --ids 023 026. "
+        "Erzwingt automatisch --force fuer diese IDs, auch ohne den Schalter "
+        "zusaetzlich zu setzen - praktisch nach dem Anpassen von chorusStart "
+        "an einem bestehenden Song.",
+    )
     args = parser.parse_args()
 
     songs = json.loads(SONGS_FILE.read_text(encoding="utf-8"))
+    if args.ids:
+        wanted = set(args.ids)
+        songs = [s for s in songs if s["id"] in wanted]
+        missing = wanted - {s["id"] for s in songs}
+        if missing:
+            raise SystemExit(f"Unbekannte IDs: {sorted(missing)}")
+
     AUDIO_DIR.mkdir(parents=True, exist_ok=True)
     ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
 
+    force = args.force or bool(args.ids)
     ok = 0
     skipped = 0
     failed = []
     for song in songs:
         out_path = AUDIO_DIR / f"{song['id']}.mp3"
-        if out_path.exists() and not args.force:
+        if out_path.exists() and not force:
             skipped += 1
             continue
         if extract_clip(song, ffmpeg_path):
