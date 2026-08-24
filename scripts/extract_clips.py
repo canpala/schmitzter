@@ -13,6 +13,7 @@ Voraussetzungen: yt-dlp und ein ffmpeg-Binary. Beides wird ueber
 scripts/requirements.txt (yt-dlp, imageio-ffmpeg) als reine
 Python-Pakete installiert, kein Homebrew/System-ffmpeg noetig.
 """
+import argparse
 import json
 import pathlib
 import subprocess
@@ -83,19 +84,32 @@ def extract_clip(song, ffmpeg_path):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Auch Songs neu extrahieren, fuer die bereits eine audio/<id>.mp3 existiert.",
+    )
+    args = parser.parse_args()
+
     songs = json.loads(SONGS_FILE.read_text(encoding="utf-8"))
     AUDIO_DIR.mkdir(parents=True, exist_ok=True)
     ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
 
     ok = 0
+    skipped = 0
     failed = []
     for song in songs:
+        out_path = AUDIO_DIR / f"{song['id']}.mp3"
+        if out_path.exists() and not args.force:
+            skipped += 1
+            continue
         if extract_clip(song, ffmpeg_path):
             ok += 1
         else:
             failed.append(song["id"])
 
-    print(f"\n{ok}/{len(songs)} Clips erstellt.")
+    print(f"\n{ok}/{len(songs)} Clips neu erstellt, {skipped} bereits vorhanden uebersprungen.")
     if failed:
         print(f"Fehlgeschlagen: {failed}")
         sys.exit(1)
