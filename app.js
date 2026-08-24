@@ -55,8 +55,8 @@ function showError(message) {
   showState(errorEl);
 }
 
-async function loadSongsData() {
-  if (songsCache) return songsCache;
+async function loadSongsData(forceRefresh = false) {
+  if (songsCache && !forceRefresh) return songsCache;
   const res = await fetch("songs.json", { cache: "no-store" });
   if (!res.ok) throw new Error("songs.json nicht erreichbar");
   songsCache = await res.json();
@@ -90,7 +90,22 @@ async function loadSong(id) {
     return;
   }
 
-  const found = songs.find((s) => s.id === id);
+  let found = songs.find((s) => s.id === id);
+
+  // Karte im aktuell im Speicher gehaltenen Stand nicht gefunden -> kann
+  // daran liegen, dass songs.json seit dem Laden der Seite aktualisiert
+  // wurde (neue Karten hinzugekommen). Einmal frisch nachladen, bevor
+  // wir aufgeben.
+  if (!found) {
+    try {
+      songs = await loadSongsData(true);
+    } catch (err) {
+      showError("Songdaten konnten nicht geladen werden.");
+      return;
+    }
+    found = songs.find((s) => s.id === id);
+  }
+
   if (!found) {
     showError("Diese Karte ist unbekannt (ungueltige ID).");
     return;
